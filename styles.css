@@ -77,6 +77,7 @@ textarea {
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow);
   border: 1px solid rgba(255, 255, 255, 0.65);
+  position: relative;
 }
 
 .hero,
@@ -387,6 +388,21 @@ h4 {
   margin-bottom: 2px;
 }
 
+.item-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.chip-button {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 41, 55, 0.15);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text);
+  font-size: 12px;
+}
+
 .agenda-time,
 .item-date,
 .stat-note {
@@ -470,6 +486,32 @@ h4 {
   margin-top: 12px;
 }
 
+.event-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+.event-modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.event-modal-panel {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 90px;
+  max-height: calc(100% - 180px);
+  overflow: auto;
+  border-radius: 26px;
+  background: rgba(251, 251, 251, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 28px 60px rgba(2, 8, 23, 0.28);
+  padding: 16px;
+}
+
 .bottom-nav {
   justify-content: space-between;
   gap: 10px;
@@ -517,8 +559,10 @@ h4 {
     flex-direction: column;
   }
 
+  .item-actions,
   .agenda-tag {
     align-self: flex-start;
+    justify-items: start;
   }
 
   .today-badge {

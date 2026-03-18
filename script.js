@@ -33,8 +33,13 @@ const statsEmpty = document.getElementById("statsEmpty");
 const nextEventText = document.getElementById("nextEventText");
 const selectedDateText = document.getElementById("selectedDateText");
 const openEventForm = document.getElementById("openEventForm");
+const eventModal = document.getElementById("eventModal");
+const eventModalMask = document.getElementById("eventModalMask");
+const closeEventModal = document.getElementById("closeEventModal");
 const cancelEventForm = document.getElementById("cancelEventForm");
 const eventForm = document.getElementById("eventForm");
+const eventFormTitle = document.getElementById("eventFormTitle");
+const eventSubmitButton = document.getElementById("eventSubmitButton");
 const formError = document.getElementById("formError");
 const eventTitleInput = document.getElementById("eventTitle");
 const eventDateInput = document.getElementById("eventDate");
@@ -44,6 +49,7 @@ const eventCategoryInput = document.getElementById("eventCategory");
 const eventDescriptionInput = document.getElementById("eventDescription");
 const navButtons = Array.from(document.querySelectorAll(".nav-item"));
 const viewPanels = Array.from(document.querySelectorAll(".view-panel"));
+
 const VIEW_META = {
   calendar: { eyebrow: "我的日历 App", title: "日历" },
   tasks: { eyebrow: "全部已创建日程", title: "任务" },
@@ -56,6 +62,7 @@ const state = {
   selectedDate: today,
   displayedMonth: new Date(today.getFullYear(), today.getMonth(), 1),
   currentView: getViewFromHash(),
+  editingEventId: null,
   events: loadEvents()
 };
 
@@ -114,8 +121,10 @@ function loadEvents() {
 function saveEvents() {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.events));
+    return true;
   } catch (error) {
     showFormError("保存失败，请确认浏览器允许本地存储。");
+    return false;
   }
 }
 
@@ -127,7 +136,8 @@ function isValidEvent(item) {
       typeof item.date === "string" &&
       typeof item.start === "string" &&
       typeof item.end === "string" &&
-      typeof item.category === "string"
+      typeof item.category === "string" &&
+      typeof item.description === "string"
   );
 }
 
@@ -139,14 +149,13 @@ function compareEvents(left, right) {
 
 function getEventsForDate(date) {
   const dateKey = getDateKey(date);
-  return state.events
-    .filter((item) => item.date === dateKey)
-    .sort(compareEvents);
+  return state.events.filter((item) => item.date === dateKey).sort(compareEvents);
 }
 
 function getMonthEvents(date) {
   const year = date.getFullYear();
   const month = date.getMonth();
+
   return state.events.filter((item) => {
     const current = parseDateKey(item.date);
     return current.getFullYear() === year && current.getMonth() === month;
@@ -169,7 +178,7 @@ function updateTodayCard() {
   todayDate.textContent = formatCardDate(state.selectedDate);
   todayWeekday.textContent = weekdayFormatter.format(state.selectedDate);
   eventCount.textContent = String(selectedEvents.length);
-  eventCountLabel.textContent = selectedEvents.length === 1 ? "个日程" : "个日程";
+  eventCountLabel.textContent = "个日程";
   agendaTitle.textContent = isToday ? "今天的日程" : `${formatCardDate(state.selectedDate)} 的日程`;
   selectedDateText.textContent = formatSelectedDateLabel(state.selectedDate);
 }
@@ -322,13 +331,11 @@ function renderProfile() {
 
 function renderViews() {
   const viewMeta = VIEW_META[state.currentView] || VIEW_META.calendar;
-
   heroEyebrow.textContent = viewMeta.eyebrow;
   heroTitle.textContent = viewMeta.title;
 
   viewPanels.forEach((panel) => {
-    const isActive = panel.dataset.view === state.currentView;
-    panel.hidden = !isActive;
+    panel.hidden = panel.dataset.view !== state.currentView;
   });
 
   navButtons.forEach((button) => {
@@ -351,7 +358,7 @@ function renderApp() {
 function createEventCard(item, showDate = false) {
   const article = document.createElement("article");
   const accentClass = CATEGORY_CLASS[item.category] || "accent-coral";
-  const description = item.description ? item.description : "未填写备注";
+  const description = item.description || "未填写备注";
 
   article.className = `agenda-item ${accentClass}`;
   article.innerHTML = `
@@ -363,8 +370,16 @@ function createEventCard(item, showDate = false) {
       <h4>${escapeHtml(item.title)}</h4>
       <p class="item-description">${escapeHtml(description)}</p>
     </div>
-    <span class="agenda-tag">${escapeHtml(item.category)}</span>
+    <div class="item-actions">
+      <span class="agenda-tag">${escapeHtml(item.category)}</span>
+      <button class="chip-button edit-event-button" type="button">编辑</button>
+    </div>
   `;
+
+  const editButton = article.querySelector(".edit-event-button");
+  editButton.addEventListener("click", () => {
+    openForm(item);
+  });
 
   return article;
 }
@@ -378,41 +393,98 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function openForm() {
+function showFormError(message) {
+  formError.hidden = false;
+  formError.textContent = message;
+}
+
+function clearFormError() {
   formError.hidden = true;
   formError.textContent = "";
-  eventDateInput.value = getDateKey(state.selectedDate);
-  eventStartInput.value = "09:00";
-  eventEndInput.value = "10:00";
-  eventCategoryInput.value = "工作";
-  eventDescriptionInput.value = "";
-  eventTitleInput.value = "";
-  eventForm.hidden = false;
+}
+
+function openForm(eventItem = null) {
+  clearFormError();
+
+  if (eventItem) {
+    state.editingEventId = eventItem.id;
+    eventFormTitle.textContent = "编辑日程";
+    eventSubmitButton.textContent = "保存修改";
+    eventTitleInput.value = eventItem.title;
+    eventDateInput.value = eventItem.date;
+    eventStartInput.value = eventItem.start;
+    eventEndInput.value = eventItem.end;
+    eventCategoryInput.value = eventItem.category;
+    eventDescriptionInput.value = eventItem.description || "";
+  } else {
+    state.editingEventId = null;
+    eventFormTitle.textContent = "新建日程";
+    eventSubmitButton.textContent = "保存日程";
+    eventTitleInput.value = "";
+    eventDateInput.value = getDateKey(state.selectedDate);
+    eventStartInput.value = "09:00";
+    eventEndInput.value = "10:00";
+    eventCategoryInput.value = "工作";
+    eventDescriptionInput.value = "";
+  }
+
+  eventModal.hidden = false;
   eventTitleInput.focus();
 }
 
 function closeForm() {
-  eventForm.hidden = true;
-  formError.hidden = true;
-  formError.textContent = "";
+  state.editingEventId = null;
+  eventModal.hidden = true;
+  clearFormError();
   eventForm.reset();
 }
 
-function createEvent(formData) {
+function getFormPayload(formData) {
   return {
-    id: `event-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-    title: formData.get("title").trim(),
-    date: formData.get("date"),
-    start: formData.get("start"),
-    end: formData.get("end"),
-    category: formData.get("category"),
-    description: formData.get("description").trim()
+    title: String(formData.get("title") || "").trim(),
+    date: String(formData.get("date") || ""),
+    start: String(formData.get("start") || ""),
+    end: String(formData.get("end") || ""),
+    category: String(formData.get("category") || "工作"),
+    description: String(formData.get("description") || "").trim()
   };
 }
 
-function showFormError(message) {
-  formError.hidden = false;
-  formError.textContent = message;
+function validatePayload(payload) {
+  if (!payload.title) {
+    return "请先填写日程标题。";
+  }
+
+  if (!payload.date || !payload.start || !payload.end) {
+    return "请把日期和时间填写完整。";
+  }
+
+  if (payload.start >= payload.end) {
+    return "结束时间需要晚于开始时间。";
+  }
+
+  return "";
+}
+
+function upsertEvent(payload) {
+  if (!state.editingEventId) {
+    const newEvent = {
+      id: `event-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      ...payload
+    };
+    state.events.push(newEvent);
+    return newEvent;
+  }
+
+  const index = state.events.findIndex((item) => item.id === state.editingEventId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const updated = { ...state.events[index], ...payload };
+  state.events[index] = updated;
+  return updated;
 }
 
 prevMonth.addEventListener("click", () => {
@@ -442,43 +514,41 @@ jumpToday.addEventListener("click", () => {
 });
 
 openEventForm.addEventListener("click", () => {
-  state.currentView = "calendar";
-  renderViews();
   openForm();
 });
 
-cancelEventForm.addEventListener("click", () => {
-  closeForm();
-});
+closeEventModal.addEventListener("click", closeForm);
+cancelEventForm.addEventListener("click", closeForm);
+eventModalMask.addEventListener("click", closeForm);
 
 eventForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const formData = new FormData(eventForm);
-  const createdEvent = createEvent(formData);
+  clearFormError();
 
-  if (!createdEvent.title) {
-    showFormError("请先填写日程标题。");
+  const payload = getFormPayload(new FormData(eventForm));
+  const validationError = validatePayload(payload);
+
+  if (validationError) {
+    showFormError(validationError);
     return;
   }
 
-  if (!createdEvent.date || !createdEvent.start || !createdEvent.end) {
-    showFormError("请把日期和时间填写完整。");
+  const saved = upsertEvent(payload);
+
+  if (!saved) {
+    showFormError("未找到要编辑的日程，请重试。");
     return;
   }
 
-  if (createdEvent.start >= createdEvent.end) {
-    showFormError("结束时间需要晚于开始时间。");
-    return;
-  }
-
-  state.events.push(createdEvent);
   state.events.sort(compareEvents);
-  saveEvents();
+  const savedOk = saveEvents();
 
-  state.selectedDate = parseDateKey(createdEvent.date);
+  if (!savedOk) {
+    return;
+  }
+
+  state.selectedDate = parseDateKey(saved.date);
   state.displayedMonth = new Date(state.selectedDate.getFullYear(), state.selectedDate.getMonth(), 1);
-  state.currentView = "calendar";
-  window.location.hash = "calendar";
 
   closeForm();
   renderApp();
@@ -494,23 +564,19 @@ navButtons.forEach((button) => {
 
     state.currentView = nextView;
     window.location.hash = nextView;
-
-    if (nextView !== "calendar") {
-      closeForm();
-    }
-
     renderViews();
   });
 });
 
 window.addEventListener("hashchange", () => {
   state.currentView = getViewFromHash();
+  renderViews();
+});
 
-  if (state.currentView !== "calendar") {
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !eventModal.hidden) {
     closeForm();
   }
-
-  renderViews();
 });
 
 renderApp();

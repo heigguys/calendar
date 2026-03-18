@@ -17,9 +17,7 @@
           <p class="eyebrow" id="heroEyebrow">我的日历 App</p>
           <h1 id="heroTitle">日历</h1>
         </div>
-        <button class="icon-button" id="jumpToday" type="button" aria-label="回到今天">
-          今
-        </button>
+        <button class="icon-button" id="jumpToday" type="button" aria-label="回到今天">今</button>
       </header>
 
       <section class="today-card">
@@ -68,45 +66,6 @@
             </div>
             <button class="primary-button" id="openEventForm" type="button">+ 新建</button>
           </div>
-
-          <form class="event-form" id="eventForm" hidden>
-            <div class="form-grid">
-              <label class="field">
-                <span>日程标题</span>
-                <input id="eventTitle" name="title" type="text" maxlength="30" placeholder="例如：产品评审" required>
-              </label>
-              <label class="field">
-                <span>日期</span>
-                <input id="eventDate" name="date" type="date" required>
-              </label>
-              <label class="field">
-                <span>开始时间</span>
-                <input id="eventStart" name="start" type="time" required>
-              </label>
-              <label class="field">
-                <span>结束时间</span>
-                <input id="eventEnd" name="end" type="time" required>
-              </label>
-              <label class="field">
-                <span>分类</span>
-                <select id="eventCategory" name="category">
-                  <option value="工作">工作</option>
-                  <option value="设计">设计</option>
-                  <option value="生活">生活</option>
-                  <option value="学习">学习</option>
-                </select>
-              </label>
-              <label class="field field-wide">
-                <span>备注</span>
-                <textarea id="eventDescription" name="description" rows="3" maxlength="80" placeholder="补充地点、目标或提醒"></textarea>
-              </label>
-            </div>
-            <p class="form-error" id="formError" hidden></p>
-            <div class="form-actions">
-              <button class="secondary-button" id="cancelEventForm" type="button">取消</button>
-              <button class="primary-button" type="submit">保存日程</button>
-            </div>
-          </form>
 
           <p class="empty-state" id="agendaEmpty">这一天还没有日程，点击“新建”添加一个。</p>
           <div class="agenda-list" id="agendaList"></div>
@@ -168,7 +127,7 @@
         </div>
         <div class="profile-card">
           <p class="profile-title">本地日程数据</p>
-          <p class="profile-copy">你创建的日程会保存在当前浏览器的本地存储里，刷新页面后仍会保留。</p>
+          <p class="profile-copy">你创建的日程会保存在当前浏览器本地存储里，刷新页面后仍会保留。</p>
         </div>
         <div class="profile-card">
           <p class="profile-title">下一个日程</p>
@@ -176,23 +135,66 @@
         </div>
         <div class="profile-card">
           <p class="profile-title">当前选中日期</p>
-          <p class="profile-copy" id="selectedDateText">2026 年 3 月 18 日</p>
+          <p class="profile-copy" id="selectedDateText">2026年3月18日</p>
         </div>
       </section>
 
+      <div class="event-modal" id="eventModal" hidden>
+        <div class="event-modal-mask" id="eventModalMask"></div>
+        <section class="event-modal-panel" role="dialog" aria-modal="true" aria-labelledby="eventFormTitle">
+          <div class="panel-header">
+            <div>
+              <p class="panel-label">日程编辑</p>
+              <h3 id="eventFormTitle">新建日程</h3>
+            </div>
+            <button class="ghost-button" id="closeEventModal" type="button" aria-label="关闭">×</button>
+          </div>
+          <form class="event-form" id="eventForm">
+            <div class="form-grid">
+              <label class="field">
+                <span>日程标题</span>
+                <input id="eventTitle" name="title" type="text" maxlength="30" placeholder="例如：产品评审" required>
+              </label>
+              <label class="field">
+                <span>日期</span>
+                <input id="eventDate" name="date" type="date" required>
+              </label>
+              <label class="field">
+                <span>开始时间</span>
+                <input id="eventStart" name="start" type="time" required>
+              </label>
+              <label class="field">
+                <span>结束时间</span>
+                <input id="eventEnd" name="end" type="time" required>
+              </label>
+              <label class="field">
+                <span>分类</span>
+                <select id="eventCategory" name="category">
+                  <option value="工作">工作</option>
+                  <option value="设计">设计</option>
+                  <option value="生活">生活</option>
+                  <option value="学习">学习</option>
+                </select>
+              </label>
+              <label class="field field-wide">
+                <span>备注</span>
+                <textarea id="eventDescription" name="description" rows="3" maxlength="80" placeholder="补充地点、目标或提醒"></textarea>
+              </label>
+            </div>
+            <p class="form-error" id="formError" hidden></p>
+            <div class="form-actions">
+              <button class="secondary-button" id="cancelEventForm" type="button">取消</button>
+              <button class="primary-button" id="eventSubmitButton" type="submit">保存日程</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
       <nav class="bottom-nav" aria-label="底部导航">
-        <button class="nav-item active" data-view="calendar" type="button">
-          <span>日历</span>
-        </button>
-        <button class="nav-item" data-view="tasks" type="button">
-          <span>任务</span>
-        </button>
-        <button class="nav-item" data-view="stats" type="button">
-          <span>统计</span>
-        </button>
-        <button class="nav-item" data-view="profile" type="button">
-          <span>我的</span>
-        </button>
+        <button class="nav-item active" data-view="calendar" type="button"><span>日历</span></button>
+        <button class="nav-item" data-view="tasks" type="button"><span>任务</span></button>
+        <button class="nav-item" data-view="stats" type="button"><span>统计</span></button>
+        <button class="nav-item" data-view="profile" type="button"><span>我的</span></button>
       </nav>
     </section>
   </main>
